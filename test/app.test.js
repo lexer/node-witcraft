@@ -6,7 +6,7 @@
  */
 
 var app = require('../app')
-  , assert = require('assert');
+  ,assert = require('assert');
 
 
 module.exports = {

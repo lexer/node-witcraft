@@ -5,11 +5,11 @@
  
 
 var express = require('express'),
-    posterous = require('./lib/posterous'),
     yaml = require('yaml'),
     fs = require('fs');
     
 var posterousConf = yaml.eval(fs.readFileSync('./config/posterous.yml', 'UTF-8'));
+var posterous = new (require('./lib/posterous')).PosterousClient(posterousConf);
     
 var app = module.exports = express.createServer();
 
@@ -36,29 +36,50 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
+/*
+app.helpers({
+    getPortfolioThumbnail: function(post){ 
+      var images = post.media[2].images;
+      
+      for ( int i = 0, i < images.length, i ++) {
+        if images[i].full.url.
+      }
+      
+      return post.media[2].;
+    }
+});
+*/
+
 // Routes
 
 app.get('/', function(req, res){
 
-
-  (new posterous.PosterousClient(posterousConf)).getPosts(function(posts){
+  posterous.getPosts(function(posts){  
     res.render('index', {
       title: 'Welcome to Witcraft website',
       posts: posts  
-    });    
+    });        
   });
-
 });
 
-app.get('/pages', function(req, res){
+app.get('/how-we-work', function(req, res) {
 
-  (new posterous.PosterousClient(posterousConf)).getPages(function(pages){
-    res.render('about', {
-      title: 'Welcome to Witcraft website',
-      pages: pages  
-    });    
+  posterous.getHowWeWork(function(page) {
+    res.render('how-we-work', {
+      title: "How we work",
+      page: page
+    });
   });
+});
 
+app.get('/about', function(req, res) {
+
+  posterous.getAboutPage(function(page) {
+    res.render('about', {
+      title: "About us",
+      page: page
+    });
+  });
 });
 
 // Only listen on $ node app.js

@@ -2,6 +2,8 @@ h1= title
 p Welcome to #{title}
 - each post in posts
   h2= post.title
-  !=post.body_html
+  !=post.body_full
+    - each image in post.media[2].images
+      img(src=image.full.url)
 
 
