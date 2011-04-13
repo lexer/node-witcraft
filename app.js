@@ -2,10 +2,15 @@
 /**
  * Module dependencies.
  */
+ 
 
-var express = require('express');
-var posterous = require('./lib/posterous');
-
+var express = require('express'),
+    posterous = require('./lib/posterous'),
+    yaml = require('yaml'),
+    fs = require('fs');
+    
+var posterousConf = yaml.eval(fs.readFileSync('./config/posterous.yml', 'UTF-8'));
+    
 var app = module.exports = express.createServer();
 
 // Configuration
@@ -35,10 +40,22 @@ app.configure('production', function(){
 
 app.get('/', function(req, res){
 
-  posterous.getPosts(function(posts){
+
+  (new posterous.PosterousClient(posterousConf)).getPosts(function(posts){
     res.render('index', {
       title: 'Welcome to Witcraft website',
       posts: posts  
+    });    
+  });
+
+});
+
+app.get('/pages', function(req, res){
+
+  (new posterous.PosterousClient(posterousConf)).getPages(function(pages){
+    res.render('about', {
+      title: 'Welcome to Witcraft website',
+      pages: pages  
     });    
   });
 
