@@ -4,6 +4,7 @@
  */
 
 var express = require('express');
+var posterous = require('./lib/posterous');
 
 var app = module.exports = express.createServer();
 
@@ -33,9 +34,14 @@ app.configure('production', function(){
 // Routes
 
 app.get('/', function(req, res){
-  res.render('index', {
-    title: 'Welcome to Witcraft website'
+
+  posterous.getPosts(function(posts){
+    res.render('index', {
+      title: 'Welcome to Witcraft website',
+      posts: posts  
+    });    
   });
+
 });
 
 // Only listen on $ node app.js

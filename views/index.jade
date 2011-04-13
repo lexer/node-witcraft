@@ -1,2 +1,7 @@
 h1= title
 p Welcome to #{title}
+- each post in posts
+  h2= post.title
+  !=post.body_html
+
+
