@@ -6,10 +6,12 @@
 
 var express = require('express'),
     yaml = require('yaml'),
-    fs = require('fs');
+    Seq = require('seq'),
+    fs = require('fs'),
+    posterous = require('./lib/posterous');
     
 var posterousConf = yaml.eval(fs.readFileSync('./config/posterous.yml', 'UTF-8'));
-var posterous = new (require('./lib/posterous')).PosterousClient(posterousConf);
+var posterousFactory = function() { return new posterous.PosterousClient(posterousConf); }
     
 var app = module.exports = express.createServer();
 
@@ -36,35 +38,51 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
-/*
 app.helpers({
-    getPortfolioThumbnail: function(post){ 
+    getPortfolioThumbnail: function(post){     
       var images = post.media[2].images;
+      var thumbnailRegex = new RegExp("^.+/thumbnail.(jpg|jpeg|png|gif)$");
       
-      for ( int i = 0, i < images.length, i ++) {
-        if images[i].full.url.
+      for (var i = 0;i<images.length; i++) {
+
+        if (thumbnailRegex.test(images[i].full.url)){      
+         return images[i].full; 
+        }
       }
       
-      return post.media[2].;
+      return null;
     }
 });
-*/
+
 
 // Routes
 
 app.get('/', function(req, res){
-
-  posterous.getPosts(function(posts){  
-    res.render('index', {
-      title: 'Welcome to Witcraft website',
-      posts: posts  
-    });        
-  });
+  Seq()
+    .par(function () { 
+        var that = this;
+        posterousFactory().getPosts(function(posts){  
+          that(null,posts);
+        });
+    })
+    .par(function () { 
+        var that = this;
+        posterousFactory().getPortfolio(function(items) {
+           that(null,items);
+        });
+    })          
+    .seq(function (posts, items) { 
+      res.render('index', {
+        title: "Witcraft",
+        posts: posts,
+        portfolioItems: items 
+      });
+    });   
 });
 
 app.get('/how-we-work', function(req, res) {
 
-  posterous.getHowWeWork(function(page) {
+  posterousFactory().getHowWeWork(function(page) {
     res.render('how-we-work', {
       title: "How we work",
       page: page
@@ -74,13 +92,23 @@ app.get('/how-we-work', function(req, res) {
 
 app.get('/about', function(req, res) {
 
-  posterous.getAboutPage(function(page) {
+  posterousFactory().getAboutPage(function(page) {
     res.render('about', {
       title: "About us",
       page: page
     });
   });
 });
+
+app.get('/portfolio', function(req, res) {
+
+  posterousFactory().getPortfolio(function(items) {
+    res.render('portfolio', {
+      title: "Portfolio",
+      items: items
+    });
+  });
+}); 
 
 // Only listen on $ node app.js
 
